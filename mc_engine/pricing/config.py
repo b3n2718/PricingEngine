@@ -9,4 +9,4 @@ class MCConfig:
     rng_type:        RNGType = RNGType.PSEUDO
     seed:            int     = 42
     use_antithetic:  bool    = True
-    corrolation_matrix: np.arry = None
+    corrolation_matrix: np.array = None
