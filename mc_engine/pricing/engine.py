@@ -33,12 +33,17 @@ class MonteCarloEngine:
 
         # 1. Zufallszahlen in Python generieren
         n = cfg.n_sims // 2 if cfg.use_antithetic else cfg.n_sims
-        z = self.rng.generate(n, cfg.n_steps, total_noise_dim ,rn_type=list(processes.values())[0].rn_type)
 
-        # 2. Antithetic Variates verdoppeln
-        if cfg.use_antithetic:
-            z = np.concatenate([z, -z], axis=0)   # [n_sims, n_steps, noise_dim]
-
+        z = list()
+        total_noise_dim = 0
+        for i,a in enumerate(asset_ids):
+            z.append(self.rng.generate(n, cfg.n_steps, processes[a].noise))
+        
+            # 2. Antithetic Variates verdoppeln
+            if cfg.use_antithetic:
+                z[i] = np.concatenate([z[i], -z[i]], axis=0)   # [n_sims, n_steps, noise_dim]
+            total_noise_dim += processes[a].noise_dim
+        z = np.concat(z,axis=2)#.reshape(n, cfg.n_steps,total_noise_dim)
         # 3. Für Single-Asset: keine Korrelation nötig
         # (bei Multi-Asset kommt hier Cholesky rein)
         if total_noise_dim > 1 and self.config.corrolation_matrix is None:        

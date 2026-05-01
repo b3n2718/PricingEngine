@@ -16,15 +16,14 @@ class RandomNumberGenerator:
     def  _generate_sobol(self, n_sims: int, n_steps: int, total_noise_dim: int):
         d       = n_steps * total_noise_dim
         sampler = qmc.Sobol(d=d, scramble=True, seed=self.seed)
-        uniform = sampler.random(n_sims)                # [n_sims, d] ∈ (0,1)
-        # Inverse CDF → N(0,1)
+        uniform = sampler.random(n_sims)
         samples = np.clip(uniform, 1e-10, 1 - 1e-10)
         return samples.reshape(n_sims, n_steps, total_noise_dim)
     
     def _generate_pseudo(self, n_sims, n_steps, total_noise_dim) -> np.ndarray:
-        rng = np.random.default_rng(self.seed)
-        return np.random.uniform(size=n_sims*n_steps*total_noise_dim).reshape(n_sims, n_steps, total_noise_dim)
-
+        samples = np.random.uniform(size=n_sims*n_steps*total_noise_dim).reshape(n_sims, n_steps, total_noise_dim)
+        return np.clip(samples, 1e-10, 1 - 1e-10)
+    
     def generate(self, n_sims: int, n_steps: int,
                  noise_dim: list[dict]) -> np.ndarray:
         match self.rng_type:
@@ -35,6 +34,8 @@ class RandomNumberGenerator:
 
         for i,dim in enumerate(noise_dim):
             match dim["type"]:
+                case "uniform":
+                    pass
                 case "normal":
                     z[:,:,i] = norm.ppf(z[:,:,i],dim["mu"],dim["sigma"])
                 case "gamma":
