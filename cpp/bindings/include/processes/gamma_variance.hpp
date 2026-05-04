@@ -7,7 +7,8 @@ struct GammaVarianceParams {
     double spot;
     double vol;
     double risk_free_rate;
-    double div_yield;
+    double theta
+    double nu;
 };
 
 class GammaVariance : public ProcessBase {

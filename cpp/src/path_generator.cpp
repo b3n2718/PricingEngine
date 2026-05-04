@@ -3,6 +3,7 @@
 #include "path_generator.hpp"
 #include "processes/gbm.hpp"
 #include "processes/heston.hpp"
+//#include "process/gamma_variance.hpp"
 #include <stdexcept>
 
 namespace mc {
@@ -73,8 +74,17 @@ std::unique_ptr<ProcessBase> PathGenerator::build_process(
             params["div_yield"].cast<double>()
         });
     }
+ /*   if (type == "GAMMAVARIANCE") {
+        return std::make_unique<GammaVariance>(GammaVarianceParams{
+            params["spot"].cast<double>(),
+            params["risk_free_rate"].cast<double>(),
+            params["theta"].cast<double>(),
+            params["nu"].cast<double>()
+        });
+    }*/
     throw std::invalid_argument("Unbekannter Prozesstyp: " + type);
 }
+
 
 py::array_t<double> PathGenerator::simulate_process(
     const ProcessBase& process,

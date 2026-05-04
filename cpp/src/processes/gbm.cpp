@@ -1,6 +1,10 @@
 #include "processes/gbm.hpp"
 #include <cmath>
 #include <stdexcept>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
+
 
 namespace mc {
 
@@ -28,9 +32,11 @@ py::array_t<double> GBM::evolve(
                        - 0.5 * params_.vol * params_.vol) * dt;
     double diffusion = params_.vol * std::sqrt(dt);
 
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; ++i){
         r(i) = s(i) * std::exp(drift + diffusion * zr(i, 0));  // GEÄNDERT: zr(i,0)
-
+    
+    py::print(s(i));
+    }
     return result;
 }
 

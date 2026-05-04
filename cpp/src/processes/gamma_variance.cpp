@@ -24,12 +24,14 @@ py::array_t<double> GammaVariance::evolve(
     auto r = result.mutable_unchecked<1>();
 
     double drift     = (params_.risk_free_rate
-                       - params_.div_yield
-                       - 0.5 * params_.vol * params_.vol) * dt;
-    double diffusion = params_.vol * std::sqrt(dt);
-
-    for (int i = 0; i < n; ++i)
-        r(i) = s(i) * std::exp(drift + diffusion * zr(i, 0));  // GEÄNDERT: zr(i,0)
+                       - 1/params.nu * std::log(1-params.theta*params.nu -0.5
+                        * params.vol*params.vol * params.nu));
+    
+    double Xi = 0;
+    for (int i = 0; i < n; ++i){
+        r(i) = s(0) * std::exp(drift *dt + Xi);  // GEÄNDERT: zr(i,0)
+        Xi += params.theta * z(i,0) + params.vol * std::sqrt(z(i,0)) *z(i,0)
+    }
 
     return result;
 }
