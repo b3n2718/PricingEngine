@@ -21,7 +21,7 @@ class AmericanOption(Product):
 
     def payoff(self, paths: dict[str, PathData],
                discount: float) -> np.ndarray:
-        S  = paths[self._underlying]._data
+        S  = paths[self._underlying].full_price_path()
         V = np.maximum(S - self.strike, 0)
         dt = self._maturity/S.shape[1]
         

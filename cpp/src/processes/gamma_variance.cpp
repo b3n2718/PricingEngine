@@ -1,21 +1,20 @@
-#include "processes/gbm.hpp"
+#include "processes/gamma_variance.hpp"
 #include <cmath>
 #include <stdexcept>
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
 
-
 namespace mc {
 
-GBM::GBM(const GBMParams& params) : params_(params) {
+GammaVariance::GammaVariance(const GammaVarianceParams& params) : params_(params) {
     if (params_.vol < 0)
         throw std::invalid_argument("Volatility must be non-negative");
     if (params_.spot <= 0)
         throw std::invalid_argument("Spot must be positive");
 }
 
-py::array_t<double> GBM::evolve(
+py::array_t<double> GammaVariance::evolve(
     const py::array_t<double>& state,
     const py::array_t<double>& z,
     double dt) const
@@ -26,19 +25,25 @@ py::array_t<double> GBM::evolve(
 
     py::array_t<double> result(n);
     auto r = result.mutable_unchecked<1>();
-
-    double drift     = (params_.risk_free_rate
-                       - params_.div_yield
-                       - 0.5 * params_.vol * params_.vol) * dt;
-    double diffusion = params_.vol * std::sqrt(dt);
-
+    
+    double omega = (1.0 / params_.nu) * std::log(
+        1.0 - params_.theta * params_.nu
+            - 0.5 * params_.vol * params_.vol * params_.nu
+    );
+    double drift = (params_.risk_free_rate - params_.div_yield + omega) * dt;
+    double Xi = 0;
     for (int i = 0; i < n; ++i){
-        r(i) = s(i) * std::exp(drift + diffusion * zr(i, 0));  // GEÄNDERT: zr(i,0)
+        r(i) = s(i) * std::exp(
+            drift
+            + params_.theta * zr(i,1)
+            + params_.vol * std::sqrt(zr(i,1)) * zr(i,0)
+        );
     }
+
     return result;
 }
 
-py::array_t<double> GBM::initial_state(int n_sims) const {
+py::array_t<double> GammaVariance::initial_state(int n_sims) const {
     py::array_t<double> state(n_sims);
     auto s = state.mutable_unchecked<1>();
     for (int i = 0; i < n_sims; ++i)

@@ -3,6 +3,10 @@
 #include "path_generator.hpp"
 #include "processes/gbm.hpp"
 #include "processes/heston.hpp"
+#include "processes/gamma_variance.hpp"
+#include "processes/vasicek.hpp"
+#include "processes/cir.hpp"
+#include "processes/hjm.hpp"
 #include <stdexcept>
 
 namespace mc {
@@ -52,7 +56,6 @@ std::unique_ptr<ProcessBase> PathGenerator::build_process(
     const py::dict& params)
 {
     std::string type = params["type"].cast<std::string>();
-
     if (type == "GBM") {
         return std::make_unique<GBM>(GBMParams{
             params["spot"].cast<double>(),
@@ -73,8 +76,43 @@ std::unique_ptr<ProcessBase> PathGenerator::build_process(
             params["div_yield"].cast<double>()
         });
     }
+    if (type == "GAMMAVARIANCE") {
+        return std::make_unique<GammaVariance>(GammaVarianceParams{
+            params["spot"].cast<double>(),
+            params["vol"].cast<double>(),
+            params["risk_free_rate"].cast<double>(),
+            params["div_yield"].cast<double>(),
+            params["theta"].cast<double>(),
+            params["nu"].cast<double>()
+        });
+    }
+    if (type == "VASICEK") {
+        return std::make_unique<Vasicek>(VasicekParams{
+            params["r_spot"].cast<double>(),
+            params["kappa"].cast<double>(),
+            params["theta"].cast<double>(),
+            params["vol"].cast<double>()
+        });
+    }
+    if (type == "CIR") {
+        return std::make_unique<CIR>(CIRParams{
+            params["r_spot"].cast<double>(),
+            params["kappa"].cast<double>(),
+            params["theta"].cast<double>(),
+            params["vol"].cast<double>()
+        });
+    }
+    if (type == "HJM") {
+        return std::make_unique<HJM>(HJMParams{
+            params["vol_params"].cast<std::vector<std::vector<double>>>(),
+            params["initial_curve"].cast<std::vector<double>>(),
+            params["tenors"].cast<std::vector<double>>(),
+            params["n_factors"].cast<int>()
+        });
+    }
     throw std::invalid_argument("Unbekannter Prozesstyp: " + type);
 }
+
 
 py::array_t<double> PathGenerator::simulate_process(
     const ProcessBase& process,

@@ -8,5 +8,5 @@ class MCConfig:
     n_steps:         int     = 252
     rng_type:        RNGType = RNGType.PSEUDO
     seed:            int     = 42
-    use_antithetic:  bool    = True
-    corrolation_matrix: np.arry = None
+    use_antithetic:  bool    = False
+    corrolation_matrix: np.array = None

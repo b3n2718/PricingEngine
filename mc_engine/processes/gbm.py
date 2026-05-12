@@ -8,7 +8,8 @@ class GBMProcess(StochasticProcess):
     def __init__(self, mkt: EquityMarketData, vol: float):
         self.mkt = mkt
         self.vol = vol
-        self.rn_type = "normal"
+        self.noise = [{"type":"normal","mu":0,"sigma":1}]
+
 
     def to_cpp_params(self) -> dict:
         return {
@@ -18,3 +19,6 @@ class GBMProcess(StochasticProcess):
             "risk_free_rate": self.mkt.curve.forward_rate(0.0),
             "div_yield":      self.mkt.div_yield,
         }
+    
+    def set_parameters(self,params:dict) -> None:
+        pass

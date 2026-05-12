@@ -23,7 +23,7 @@ class AsianOption(Product):
 
     def payoff(self, paths: dict[str, PathData],
                discount: float) -> np.ndarray:
-        S_T  = paths[self._underlying]._data
+        S_T  = paths[self._underlying].full_price_path()
         sign = 1.0 if self.is_call else -1.0
         if self.mean == "arithmetic":
             S_T = np.mean(S_T,axis=1)

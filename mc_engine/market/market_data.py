@@ -6,3 +6,11 @@ class EquityMarketData:
     spot:      float
     div_yield: float
     curve:     YieldCurve
+
+@dataclass
+class FISpotRateMarketData:
+    r_spot:      float
+
+@dataclass
+class FIForwardRateMarketData:
+    r_forward:      float
