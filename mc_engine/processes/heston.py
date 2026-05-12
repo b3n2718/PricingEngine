@@ -28,5 +28,5 @@ class HESTONProcess(StochasticProcess):
             "div_yield":      self.mkt.div_yield,
         }
 
-    def set_parameters(self,*params) -> None:
+    def set_parameters(self,params:dict) -> None:
         pass

@@ -7,6 +7,9 @@ ext = Extension(
     sources=[
         "cpp/src/processes/gbm.cpp",
         "cpp/src/processes/heston.cpp",
+        "cpp/src/processes/vasicek.cpp",
+        "cpp/src/processes/gamma_variance.cpp",
+        "cpp/src/processes/cir.cpp",
         "cpp/src/path_generator.cpp",
         "cpp/src/utils/cholesky.cpp",
         "cpp/bindings/bindings.cpp",

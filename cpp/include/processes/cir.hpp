@@ -3,17 +3,16 @@
 
 namespace mc {
 
-struct GammaVarianceParams {
-    double spot;
+struct CIRParams {
+    double r_spot;
+    double kappa;
+    double theta;
     double vol;
-    double risk_free_rate;
-    double theta
-    double nu;
 };
 
-class GammaVariance : public ProcessBase {
+class CIR : public ProcessBase {
 public:
-    explicit GammaVariance(const GammaVarianceParams& params);
+    explicit CIR(const CIRParams& params);
 
     py::array_t<double> evolve(
         const py::array_t<double>& state,
@@ -22,13 +21,13 @@ public:
     ) const override;
 
     int state_dim() const override { return 1; }
-    int noise_dim() const override { return 2; }
+    int noise_dim() const override { return 1; }
 
     // Initialen Zustand aufbauen — spot für alle n_sims
     py::array_t<double> initial_state(int n_sims) const;
 
 private:
-    GammaVariance params_;
+    CIRParams params_;
 };
 
 } // namespace mc

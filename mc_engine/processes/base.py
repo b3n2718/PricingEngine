@@ -13,7 +13,7 @@ class StochasticProcess(ABC):
         ...
     
     @abstractmethod 
-    def set_parameters(self,*params) -> None:
+    def set_parameters(self,params:dict) -> None:
         """Setzt Parameter des Modells basierend auf den MC Parametern wenn nötig"""
         ...
     @property

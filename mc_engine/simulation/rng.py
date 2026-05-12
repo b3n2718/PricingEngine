@@ -22,7 +22,7 @@ class RandomNumberGenerator:
     
     def _generate_pseudo(self, n_sims, n_steps, total_noise_dim) -> np.ndarray:
         samples = np.random.uniform(size=n_sims*n_steps*total_noise_dim).reshape(n_sims, n_steps, total_noise_dim)
-        return np.clip(samples, 1e-10, 1 - 1e-10)
+        return np.clip(samples, 1e-6, 0.999)
     
     def generate(self, n_sims: int, n_steps: int,
                  noise_dim: list[dict]) -> np.ndarray:

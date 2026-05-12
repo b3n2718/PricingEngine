@@ -37,6 +37,7 @@ class MonteCarloEngine:
         z = list()
         total_noise_dim = 0
         for i,a in enumerate(asset_ids):
+            processes[a].set_parameters({"dt":dt})
             z.append(self.rng.generate(n, cfg.n_steps, processes[a].noise))
         
             # 2. Antithetic Variates verdoppeln
@@ -46,6 +47,7 @@ class MonteCarloEngine:
         z = np.concat(z,axis=2)#.reshape(n, cfg.n_steps,total_noise_dim)
         # 3. Für Single-Asset: keine Korrelation nötig
         # (bei Multi-Asset kommt hier Cholesky rein)
+        
         if total_noise_dim > 1 and self.config.corrolation_matrix is None:        
             chol = np.eye(total_noise_dim)
             z    = self.correlator.correlate(z, chol)
@@ -56,14 +58,19 @@ class MonteCarloEngine:
         paths_raw: dict = mc_core.generate(params_list, asset_ids, z, dt)
 
         # 5. Rohe Arrays in typisierte PathData Objekte wandeln
-        paths = {
-            asset_id: build_path(paths_raw[asset_id], processes[asset_id].process_type)
+        model_params = dict()
+        for asset_id in asset_ids:
+            model_params[asset_id] = processes[asset_id].to_cpp_params()
+            model_params[asset_id].update({"dt":dt})
+        
+        self.paths = {
+            asset_id: build_path(paths_raw[asset_id], processes[asset_id].process_type, model_params[asset_id])
             for asset_id in asset_ids
         }
 
         # 6. Payoffs berechnen
-        payoffs = product.payoff(paths, df)
-        return self._compute_result(payoffs)
+        payoffs = product.payoff(self.paths, df)
+        return self._compute_result(payoffs) 
 
     def _compute_result(self, payoffs: np.ndarray) -> PricingResult:
         n  = len(payoffs)

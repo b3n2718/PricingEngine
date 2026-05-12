@@ -16,3 +16,7 @@ class ScalarPath(PathData):
 
     def at_step(self, step: int) -> np.ndarray:
         return self._data[:, step]
+    
+    def full_price_path(self) -> np.ndarray:
+        return self._data[:, :]
+    

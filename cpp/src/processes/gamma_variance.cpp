@@ -1,6 +1,9 @@
 #include "processes/gamma_variance.hpp"
 #include <cmath>
 #include <stdexcept>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
 
 namespace mc {
 
@@ -22,15 +25,19 @@ py::array_t<double> GammaVariance::evolve(
 
     py::array_t<double> result(n);
     auto r = result.mutable_unchecked<1>();
-
-    double drift     = (params_.risk_free_rate
-                       - 1/params.nu * std::log(1-params.theta*params.nu -0.5
-                        * params.vol*params.vol * params.nu));
     
+    double omega = (1.0 / params_.nu) * std::log(
+        1.0 - params_.theta * params_.nu
+            - 0.5 * params_.vol * params_.vol * params_.nu
+    );
+    double drift = (params_.risk_free_rate - params_.div_yield + omega) * dt;
     double Xi = 0;
     for (int i = 0; i < n; ++i){
-        r(i) = s(0) * std::exp(drift *dt + Xi);  // GEÄNDERT: zr(i,0)
-        Xi += params.theta * z(i,0) + params.vol * std::sqrt(z(i,0)) *z(i,0)
+        r(i) = s(i) * std::exp(
+            drift
+            + params_.theta * zr(i,1)
+            + params_.vol * std::sqrt(zr(i,1)) * zr(i,0)
+        );
     }
 
     return result;
