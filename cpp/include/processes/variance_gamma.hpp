@@ -3,7 +3,7 @@
 
 namespace mc {
 
-struct GammaVarianceParams {
+struct VarianceGammaParams {
     double spot;
     double vol;
     double risk_free_rate;
@@ -12,9 +12,9 @@ struct GammaVarianceParams {
     double nu;
 };
 
-class GammaVariance : public ProcessBase {
+class VarianceGamma : public ProcessBase {
 public:
-    explicit GammaVariance(const GammaVarianceParams& params);
+    explicit VarianceGamma(const VarianceGammaParams& params);
 
     py::array_t<double> evolve(
         const py::array_t<double>& state,
@@ -27,9 +27,8 @@ public:
 
     // Initialen Zustand aufbauen — spot für alle n_sims
     py::array_t<double> initial_state(int n_sims) const;
-
 private:
-    GammaVarianceParams params_;
+    VarianceGammaParams params_;
 };
 
 } // namespace mc

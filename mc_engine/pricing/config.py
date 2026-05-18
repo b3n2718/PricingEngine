@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from simulation.rng import RNGType
+from mc_engine.simulation.rng import RNGType
 import numpy as np
 
 @dataclass

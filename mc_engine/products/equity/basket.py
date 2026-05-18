@@ -1,6 +1,6 @@
 import numpy as np
-from products.base import Product
-from paths.base import PathData
+from mc_engine.products.base import Product
+from mc_engine.paths.base import PathData
 from scipy.stats import gmean
 
 class BasketOption(Product):

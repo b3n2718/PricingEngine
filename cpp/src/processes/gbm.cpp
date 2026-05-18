@@ -13,6 +13,7 @@ GBM::GBM(const GBMParams& params) : params_(params) {
         throw std::invalid_argument("Volatility must be non-negative");
     if (params_.spot <= 0)
         throw std::invalid_argument("Spot must be positive");
+    type = "GBM";
 }
 
 py::array_t<double> GBM::evolve(

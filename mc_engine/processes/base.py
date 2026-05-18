@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 
 class StochasticProcess(ABC):
+    """
+    Abstract class for a stochastic process
+    """
 
     @property
     @abstractmethod
@@ -9,15 +12,10 @@ class StochasticProcess(ABC):
 
     @abstractmethod
     def to_cpp_params(self) -> dict:
-        """Serialisiert Parameter für den C++ Kern."""
+        """Serealizes Parameters for C++ processing"""
         ...
     
     @abstractmethod 
     def set_parameters(self,params:dict) -> None:
-        """Setzt Parameter des Modells basierend auf den MC Parametern wenn nötig"""
-        ...
-    @property
-    @abstractmethod
-    def noise_dim(self) -> int:
-        """Anzahl benötigter Zufallszahlen pro Zeitschritt."""
+        """Set p"""
         ...

@@ -1,12 +1,12 @@
 import numpy as np
-from pricing.config import MCConfig
-from pricing.result import PricingResult
-from processes.base import StochasticProcess
-from products.base import Product
-from paths.path_factory import build_path
-from simulation.rng import RandomNumberGenerator
-from simulation.correlator import Correlator
-from market.curves import YieldCurve
+from mc_engine.pricing.config import MCConfig
+from mc_engine.pricing.result import PricingResult
+from mc_engine.processes.base import StochasticProcess
+from mc_engine.products.base import Product
+from mc_engine.paths.path_factory import build_path
+from mc_engine.simulation.rng import RandomNumberGenerator
+from mc_engine.simulation.correlator import Correlator
+from mc_engine.market.curves import YieldCurve
 
 import mc_engine.mc_core as mc_core
 
@@ -56,6 +56,7 @@ class MonteCarloEngine:
 
         # 4. Pfade in C++ simulieren
         paths_raw: dict = mc_core.generate(params_list, asset_ids, z, dt)
+        self.raw_data = paths_raw
 
         # 5. Rohe Arrays in typisierte PathData Objekte wandeln
         model_params = dict()

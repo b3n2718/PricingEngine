@@ -1,5 +1,5 @@
-from processes.base import StochasticProcess
-from market.market_data import EquityMarketData
+from mc_engine.processes.base import StochasticProcess
+from mc_engine.market.market_data import EquityMarketData
 
 class GBMProcess(StochasticProcess):
     process_type = "GBM"
@@ -18,6 +18,7 @@ class GBMProcess(StochasticProcess):
             "vol":            self.vol,
             "risk_free_rate": self.mkt.curve.forward_rate(0.0),
             "div_yield":      self.mkt.div_yield,
+            "path_type":      "spot"
         }
     
     def set_parameters(self,params:dict) -> None:

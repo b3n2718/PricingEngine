@@ -14,6 +14,7 @@ CIR::CIR(const CIRParams& params) : params_(params) {
 
     if (params_.vol < 0)
         throw std::invalid_argument("Volatility must be non-negative");
+    type = "CIR";
 }
 
 py::array_t<double> CIR::evolve(
