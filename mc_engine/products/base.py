@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from paths.base import PathData
+from mc_engine.paths.base import PathData
 
 class Product(ABC):
 

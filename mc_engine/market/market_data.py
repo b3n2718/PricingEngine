@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from market.curves import YieldCurve
+from mc_engine.market.curves import YieldCurve
+import numpy as np
 
 @dataclass
 class EquityMarketData:
@@ -8,9 +9,8 @@ class EquityMarketData:
     curve:     YieldCurve
 
 @dataclass
-class FISpotRateMarketData:
+class FIMarketData:
     r_spot:      float
-
-@dataclass
-class FIForwardRateMarketData:
-    r_forward:      float
+    r_forward:      np.array
+    forward_tenors: np.array 
+       

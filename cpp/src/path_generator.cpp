@@ -1,5 +1,5 @@
-// src/path_generator.cpp — komplett überarbeitet
-
+// src/path_generator.cpp
+#define PYBIND11_DETAILED_ERROR_MESSAGES
 #include "path_generator.hpp"
 #include "processes/gbm.hpp"
 #include "processes/heston.hpp"
@@ -7,6 +7,7 @@
 #include "processes/vasicek.hpp"
 #include "processes/cir.hpp"
 #include "processes/hjm.hpp"
+#include "processes/gaussian_two_factors.hpp"
 #include <stdexcept>
 
 namespace mc {
@@ -30,6 +31,8 @@ py::dict PathGenerator::generate(
         auto process = build_process(params_list[a]);
         int  ndim    = process->noise_dim();
 
+        std::string path_type = params_list[a]["path_type"].cast<std::string>();
+
         // z-Slice für dieses Asset manuell kopieren: [n_sims, n_steps, ndim]
         // Kein Python-Slicing — direkt in einen neuen Buffer kopieren
         py::array_t<double> z_asset({n_sims, n_steps, ndim});
@@ -41,11 +44,23 @@ py::dict PathGenerator::generate(
                 for (int d = 0; d < ndim; ++d)
                     za(i, t, d) = zr(i, t, noise_offset + d);
 
-        auto spot_path = simulate_process(
-            *process, z_asset, dt, n_sims, n_steps
-        );
+        py::array_t<double> path;
+        if (path_type == "spot"){
+            path = simulate_process_spot(
+                *process, z_asset, dt, n_sims, n_steps
+            );
+        } else if (path_type == "forward") 
+        {
+            int n_tenors = params_list[a]["tenors"].cast<py::array_t<double>>().shape(0);
+            path = simulate_process_forward(
+                *process, z_asset, dt, n_sims, n_steps, n_tenors
+            );
+        } else
+        {
+            throw std::invalid_argument("Unbekannter Pfadtyp: " + path_type);
+        }
 
-        result[asset_ids[a].c_str()] = spot_path;
+        result[asset_ids[a].c_str()] = path;
         noise_offset += ndim;
     }
 
@@ -76,8 +91,8 @@ std::unique_ptr<ProcessBase> PathGenerator::build_process(
             params["div_yield"].cast<double>()
         });
     }
-    if (type == "GAMMAVARIANCE") {
-        return std::make_unique<GammaVariance>(GammaVarianceParams{
+    if (type == "VARIANCEGAMMA") {
+        return std::make_unique<VarianceGamma>(VarianceGammaParams{
             params["spot"].cast<double>(),
             params["vol"].cast<double>(),
             params["risk_free_rate"].cast<double>(),
@@ -102,19 +117,31 @@ std::unique_ptr<ProcessBase> PathGenerator::build_process(
             params["vol"].cast<double>()
         });
     }
-    if (type == "HJM") {
-        return std::make_unique<HJM>(HJMParams{
-            params["vol_params"].cast<std::vector<std::vector<double>>>(),
-            params["initial_curve"].cast<std::vector<double>>(),
-            params["tenors"].cast<std::vector<double>>(),
-            params["n_factors"].cast<int>()
-        });
-    }
+if (type == "HJM") {
+    return std::make_unique<HJM>(HJMParams{
+        params["r_forward"].cast<py::array_t<double>>(),
+        params["std_scores"].cast<py::array_t<double>>(),                              // pos 2
+        params["spline_parameters"].cast<py::array_t<double>>(), // pos 3
+        params["tenors"].cast<py::array_t<double>>(),
+        params["num_vol_comp"].cast<int>()
+    });
+}
+if (type == "G2PP") {
+    return std::make_unique<G2pp>(G2ppParams{
+        params["a"].cast<double>(),
+        params["b"].cast<double>(),
+        params["sigma"].cast<double>(),
+        params["eta"].cast<double>(),
+        params["rho"].cast<double>(),
+        params["x0"].cast<double>(),
+        params["y0"].cast<double>()
+    });
+}
     throw std::invalid_argument("Unbekannter Prozesstyp: " + type);
 }
 
 
-py::array_t<double> PathGenerator::simulate_process(
+py::array_t<double> PathGenerator::simulate_process_spot(
     const ProcessBase& process,
     const py::array_t<double>& z_asset,
     double dt,
@@ -122,8 +149,76 @@ py::array_t<double> PathGenerator::simulate_process(
     int n_steps)
 {
     // Ergebnis-Array: nur Spot-Pfad [n_sims, n_steps]
-    py::array_t<double> path({n_sims, n_steps});
-    auto p = path.mutable_unchecked<2>();
+    py::array_t<double> path;
+
+    if (process.state_dim() == 1) {
+        path = py::array_t<double>({n_sims, n_steps});
+    }
+    else if (process.type == "G2PP") {
+        path = py::array_t<double>({n_sims, 2, n_steps});
+    }
+    else {
+        path = py::array_t<double>({n_sims, n_steps});
+    }
+    
+    // Anfangszustand — jetzt über Basisklasse aufrufbar
+    py::array_t<double> state = process.initial_state(n_sims);
+
+    auto zr = z_asset.unchecked<3>();   // [n_sims, n_steps, noise_dim]
+    int  ndim = process.noise_dim();
+    
+
+    for (int t = 0; t < n_steps; ++t) {
+
+        // z für diesen Zeitschritt: [n_sims, noise_dim]
+        py::array_t<double> z_t({n_sims, ndim});
+        auto zt = z_t.mutable_unchecked<2>();
+        for (int i = 0; i < n_sims; ++i)
+            for (int d = 0; d < ndim; ++d)
+                zt(i, d) = zr(i, t, d);
+
+        state = process.evolve(state, z_t, dt);
+        //py::print(process.type);
+
+        // Spot aus Zustand lesen
+        if (process.state_dim() == 1) {
+            // GBM: state ist [n_sims]
+            auto p = path.mutable_unchecked<2>();
+            auto s = state.unchecked<1>();
+            for (int i = 0; i < n_sims; ++i)
+                p(i, t) = s(i);
+        } else if(process.type=="HESTON"){
+            // Heston: state ist [n_sims, 2] — Spalte 0 ist Spot
+            auto p = path.mutable_unchecked<2>();
+            auto s = state.unchecked<2>();
+            for (int i = 0; i < n_sims; ++i)
+                p(i, t) = s(i, 0);
+        }else if(process.type=="G2PP"){
+            // Heston: state ist [n_sims, 2] — Spalte 0 ist Spot
+            auto p = path.mutable_unchecked<3>();
+            auto s = state.unchecked<2>();
+            for (int i = 0; i < n_sims; ++i){
+                p(i, 0, t) = s(i, 0);
+                p(i, 1, t) = s(i, 1);
+            }
+        }
+
+    }
+
+    return path;
+}
+
+py::array_t<double> PathGenerator::simulate_process_forward(
+    const ProcessBase& process,
+    const py::array_t<double>& z_asset,
+    double dt,
+    int n_sims,
+    int n_steps,
+    int n_tenors)
+{
+    // Ergebnis-Array: nur Spot-Pfad [n_sims, n_steps]
+    py::array_t<double> path({n_sims, n_tenors, n_steps});
+    auto p = path.mutable_unchecked<3>();
 
     // Anfangszustand — jetzt über Basisklasse aufrufbar
     py::array_t<double> state = process.initial_state(n_sims);
@@ -142,17 +237,14 @@ py::array_t<double> PathGenerator::simulate_process(
 
         state = process.evolve(state, z_t, dt);
 
-        // Spot aus Zustand lesen
-        if (process.state_dim() == 1) {
-            // GBM: state ist [n_sims]
-            auto s = state.unchecked<1>();
-            for (int i = 0; i < n_sims; ++i)
-                p(i, t) = s(i);
-        } else {
-            // Heston: state ist [n_sims, 2] — Spalte 0 ist Spot
-            auto s = state.unchecked<2>();
-            for (int i = 0; i < n_sims; ++i)
-                p(i, t) = s(i, 0);
+        auto s = state.unchecked<2>();
+        for (int i = 0; i < n_sims; ++i)
+        {
+            for (int j = 0; j < n_tenors; ++j)
+            {
+                p(i, j, t) = s(i,j);
+            }
+            
         }
     }
 

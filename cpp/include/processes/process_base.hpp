@@ -8,6 +8,7 @@ namespace py = pybind11;
 
 // process_base.hpp — initial_state hinzufügen
 
+
 class ProcessBase {
     public:
         virtual ~ProcessBase() = default;
@@ -23,6 +24,7 @@ class ProcessBase {
     
         virtual int state_dim() const = 0;
         virtual int noise_dim() const = 0;
+        std::string type;
     };
 
 } // namespace mc

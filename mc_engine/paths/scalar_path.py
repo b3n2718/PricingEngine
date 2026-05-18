@@ -1,5 +1,5 @@
 import numpy as np
-from paths.base import PathData
+from mc_engine.paths.base import PathData
 
 class ScalarPath(PathData):
     """Für GBM — raw array shape [n_sims, n_steps]"""

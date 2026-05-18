@@ -1,8 +1,8 @@
-from processes.base import StochasticProcess
-from market.market_data import EquityMarketData
+from mc_engine.processes.base import StochasticProcess
+from mc_engine.market.market_data import EquityMarketData
 
-class GammaVarianceProcess(StochasticProcess):
-    process_type = "GAMMAVARIANCE"
+class VarianceGammaProcess(StochasticProcess):
+    process_type = "VARIANCEGAMMA"
     noise_dim    = 1
 
     def __init__(self, mkt: EquityMarketData, vol: float, theta: float, nu: float):
@@ -15,13 +15,14 @@ class GammaVarianceProcess(StochasticProcess):
 
     def to_cpp_params(self) -> dict:
         return {
-            "type":           "GAMMAVARIANCE",
+            "type":           "VARIANCEGAMMA",
             "spot":           self.mkt.spot,
             "vol":            self.vol,
             "risk_free_rate": self.mkt.curve.forward_rate(0.0),
             "div_yield":      self.mkt.div_yield,
             "theta":          self.theta,
-            "nu":             self.nu
+            "nu":             self.nu,
+            "path_type":      "spot"
         }
     
     def set_parameters(self,params:dict) -> None:

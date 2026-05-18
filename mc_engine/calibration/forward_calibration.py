@@ -9,6 +9,7 @@ class HJMVolComponents:
     tenors: np.array
     parameters: np.array
     scores_std : np.array
+    n_components: float
     
 
 class HJMCalbirator:
@@ -20,7 +21,8 @@ class HJMCalbirator:
     def create_vol_components(self):
         return HJMVolComponents(tenors=self.tenors, 
                                 parameters = self.vol_component_splines,
-                                scores_std = self.scores_std
+                                scores_std = self.scores_std,
+                                n_components=self.n_components
                                 )
 
     def compute_forward_returns(self,fwd_df: pd.DataFrame) -> pd.DataFrame:
@@ -38,14 +40,14 @@ class HJMCalbirator:
 
         spline_params = []
 
-        for component in x:
+        for component in pca.components_:
             spline = CubicSpline(self.tenors, component, bc_type='natural')
-            spline_params.append(spline.c)
+            spline_params.append(spline.c.T)
         self.vol_component_splines = np.array(spline_params)
         scores = pd.DataFrame(
             data=principal_components,
             index=self.fwd_returns.index,
             columns=[f"PC{i+1}_score" for i in range(n_comp)]
         )
-
+        self.n_components=n_comp
         self.scores_std = scores.std(axis=0)  # Standardabweichung der Scores

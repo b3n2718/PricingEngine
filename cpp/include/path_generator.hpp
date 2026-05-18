@@ -36,12 +36,20 @@ private:
     // Simuliert einen einzelnen Prozess über alle Zeitschritte
     // z_asset: Zufallszahlen für dieses Asset [n_sims, n_steps, noise_dim]
     // Gibt Spot-Pfad zurück: [n_sims, n_steps]
-    static pybind11::array_t<double> simulate_process(
+    static pybind11::array_t<double> simulate_process_spot(
         const ProcessBase& process,
         const pybind11::array_t<double>& z_asset,
         double dt,
         int n_sims,
         int n_steps
+    );
+    static pybind11::array_t<double> simulate_process_forward(
+        const ProcessBase& process,
+        const pybind11::array_t<double>& z_asset,
+        double dt,
+        int n_sims,
+        int n_steps,
+        int n_tenors
     );
 };
 

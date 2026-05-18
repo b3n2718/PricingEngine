@@ -13,6 +13,7 @@ namespace py = pybind11;
 Vasicek::Vasicek(const VasicekParams& params) : params_(params) {
     if (params_.vol < 0)
         throw std::invalid_argument("Volatility must be non-negative");
+    type = "VASICEK";
 }
 
 py::array_t<double> Vasicek::evolve(

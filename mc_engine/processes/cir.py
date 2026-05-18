@@ -1,11 +1,14 @@
-from processes.base import StochasticProcess
-from market.market_data import FISpotRateMarketData
+from mc_engine.processes.base import StochasticProcess
+from mc_engine.market.market_data import FIMarketData
 
 class CIRProcess(StochasticProcess):
+    """
+    Cox-Ingersoll-Ross Process for short rate modelling
+    """
     process_type = "CIR"
     noise_dim    = 1
 
-    def __init__(self, mkt: FISpotRateMarketData, vol: float, kappa: float, theta: float):
+    def __init__(self, mkt: FIMarketData, vol: float, kappa: float, theta: float):
         self.mkt = mkt
         self.vol = vol
         self.kappa = kappa
@@ -20,6 +23,7 @@ class CIRProcess(StochasticProcess):
             "vol":            self.vol,
             "kappa":          self.kappa,
             "theta":          self.theta,
+            "path_type":      "spot"
         }
     
     def set_parameters(self,params:dict) -> None:

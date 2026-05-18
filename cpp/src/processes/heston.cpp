@@ -4,7 +4,9 @@
 
 namespace mc {
 
-Heston::Heston(const HestonParams& params) : params_(params) {}
+Heston::Heston(const HestonParams& params) : params_(params){
+    type = "HESTON";
+}
 
 py::array_t<double> Heston::evolve(
     const py::array_t<double>& state,
